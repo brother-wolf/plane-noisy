@@ -1,32 +1,41 @@
 mod domains;
 mod scrapers;
 mod file_ops;
+mod formats;
 
 use std::result::Result;
-use crate::domains::twitter::Tweet;
+use structopt::StructOpt;
+use crate::domains::plane_noise::PlaneNoise;
+
+#[derive(StructOpt)]
+#[structopt(rename_all = "kebab-case")]
+struct Opt {
+    #[structopt(short = "f",
+    long = "format",
+    default_value = "json",
+    possible_values = &vec![ "bitbar", "json" ],
+    help = "The format for the output")]
+    format: String,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let opts = Opt::from_args();
+    let format: String = opts.format;
+
     let url = "https://twitter.com/HeathrowNoise";
     let client = reqwest::Client::new();
     let res = client.get(url).send().await?;
     let body = res.text().await?;
 
-    file_ops::write_to_file(&body, "data/body.html")?;
+    // file_ops::write_to_file(&body, "body.html")?;
 
-    scrapers::twitter::scrape(&body).iter().flat_map(|tweet| {
-        match &tweet {
-            t if t.content.contains("westerly") => Some(Tweet::new(t.id, t.date_time, "westerly".to_string())),
-            t if t.content.contains("easterly") => Some(Tweet::new(t.id, t.date_time, "easterly".to_string())),
-            _ => None,
-        }
-    }).for_each(|tweet|
-        println!("{} >> {} ({}): {}",
-                 tweet.id,
-                 tweet.date_time.format("%Y-%m-%d %H:%M:%S"),
-                 tweet.date_time.timestamp_millis(),
-                 tweet.content
-        )
-    );
+    let data = PlaneNoise::from(&scrapers::twitter::scrape(&body));
+
+    match format.as_str() {
+        "bitbar" => formats::bitbar::display(&data),
+        _ => formats::json::display(&data), // json is default format
+    }
+
     Ok(())
 }
