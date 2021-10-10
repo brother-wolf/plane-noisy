@@ -1,11 +1,13 @@
-mod domains;
-mod scrapers;
-mod file_ops;
-mod formats;
-
 use std::result::Result;
+
+use scrapers_lib::Site;
+use scrapers_lib::twitter::Twitter;
 use structopt::StructOpt;
+
 use crate::domains::plane_noise::PlaneNoise;
+
+mod domains;
+mod formats;
 
 #[derive(StructOpt)]
 #[structopt(rename_all = "kebab-case")]
@@ -28,9 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let res = client.get(url).send().await?;
     let body = res.text().await?;
 
-    // file_ops::write_to_file(&body, "body.html")?;
-
-    let data = PlaneNoise::from(&scrapers::twitter::scrape(&body));
+    let data = PlaneNoise::from(&Twitter::scrape(&body));
 
     match format.as_str() {
         "bitbar" => formats::bitbar::display(&data),

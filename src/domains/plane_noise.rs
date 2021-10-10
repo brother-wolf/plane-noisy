@@ -1,5 +1,5 @@
+use scrapers_lib::twitter::Tweet;
 use serde_derive::Serialize;
-use crate::domains::twitter::Tweet;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct PlaneNoise {
