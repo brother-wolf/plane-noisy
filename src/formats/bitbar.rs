@@ -24,5 +24,6 @@ pub fn display(data: &Vec<PlaneNoise>) {
             println!("---");
         }
         println!("{} : {} | color={}", d.date_time, d.direction, colour);
+        println!("-- {} | color={} href=https://twitter.com/HeathrowNoise/status/{}", d.tweet_content, colour, d.id);
     });
 }
